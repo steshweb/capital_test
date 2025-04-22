@@ -8,14 +8,12 @@ export async function getMatrix(url: string): Promise<number[]> {
 
     const text = response.data;
 
-    const lines = text.trim().split('\n');
-    const cleanedLines = lines.filter(line => !line.includes('+') && line.includes('|'))
-      .map(line => line.trim());
+    if (typeof text !== 'string' || !text.trim()) {
+      console.error('Invalid data format: expected a non-empty text');
+      return [];
+    }
 
-    const rows = cleanedLines.map(line => {
-      const numbers = line.split(/\s*\|\s*/).filter(Boolean).map(Number);
-      return numbers;
-    });
+    const rows = convertTextToMatrix(text);
 
     if (!rows.every(row => row.length === rows.length)) {
       console.error('Matrix is not square');
@@ -24,9 +22,38 @@ export async function getMatrix(url: string): Promise<number[]> {
 
     return spiral(rows);
   } catch (err) {
-    console.error('An error:', err);
+    if (axios.isAxiosError(err)) {
+      if (err.response) {
+        const status = err.response.status;
+        console.error(`Server error: ${status} - ${err.response.statusText}`);
+
+        if (status >= 500 && status < 600) {
+          console.warn("Server error, please try again later.");
+        }
+      } else if (err.request) {
+        console.error('No response received:', err.message);
+      } else {
+        console.error('Error setting up request:', err.message);
+      }
+    } else {
+      console.error('Unexpected error:', err);
+    }
+
     return [];
   }
+}
+
+function convertTextToMatrix(text: string): number[][] {
+  const lines = text.trim().split('\n');
+  const cleanedLines = lines.filter(line => !line.includes('+') && line.includes('|'))
+    .map(line => line.trim());
+
+  const rows = cleanedLines.map(line => {
+    const numbers = line.split(/\s*\|\s*/).filter(Boolean).map(Number);
+    return numbers;
+  });
+
+  return rows;
 }
 
 function spiral(matrix: number[][]): number[] {
