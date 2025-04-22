@@ -1,4 +1,4 @@
-import { getMatrix } from './matrix';
+import { getMatrix } from './api/getMatrix';
 
 const SOURCE_URL = 'https://raw.githubusercontent.com/Real-Estate-THE-Capital/js-assignment/main/matrix.txt';
 const TRAVERSAL = [
